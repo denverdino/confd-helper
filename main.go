@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
 	"github.com/samalba/dockerclient"
 	"os"
 	"path"
-
-	log "github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
+	"strings"
 )
 
 func ExecInContainer(client *dockerclient.DockerClient, containerId string, cmd []string) (string, error) {
@@ -144,17 +144,21 @@ func exec(c *cli.Context) {
 	log.Infof("docker exec %s %s", container, cmd)
 	execConfig := &dockerclient.ExecConfig{
 		Container:    container,
-		Cmd:          []string{cmd},
+		Detach:       false,
+		Cmd:          strings.Split(cmd, " "),
 		AttachStdin:  false,
 		AttachStdout: true,
 		AttachStderr: true,
 		Tty:          false,
 	}
 
-	_, err := client.Exec(execConfig)
+	result, err := client.Exec(execConfig)
 	if err != nil {
 		log.Fatalf("Failed to execute command '%s' in container '%s': %v", cmd, container, err)
+	} else {
+		log.Infof("Exec id: %s", result)
 	}
+
 }
 
 func kill(c *cli.Context) {
