@@ -4,10 +4,10 @@ import (
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/denverdino/shlex"
 	"github.com/samalba/dockerclient"
 	"os"
 	"path"
-	"strings"
 )
 
 func ExecInContainer(client *dockerclient.DockerClient, containerId string, cmd []string) (string, error) {
@@ -142,10 +142,16 @@ func exec(c *cli.Context) {
 	container := c.String("container")
 	cmd := c.String("command")
 	log.Infof("docker exec %s %s", container, cmd)
+	cmds, err := shlex.Split(cmd)
+
+	if err != nil {
+		log.Fatalf("Failed to split command '%s': %v", cmd, err)
+	}
+
 	execConfig := &dockerclient.ExecConfig{
 		Container:    container,
 		Detach:       false,
-		Cmd:          strings.Split(cmd, " "),
+		Cmd:          cmds,
 		AttachStdin:  false,
 		AttachStdout: true,
 		AttachStderr: true,
